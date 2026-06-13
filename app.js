@@ -355,7 +355,7 @@ function sealSVG(px = 72) {
 }
 
 let state = {
-  topic: "total",
+  topic: "love",
   pickedCards: [],   // {card, reversed}
   result: null,
 };
