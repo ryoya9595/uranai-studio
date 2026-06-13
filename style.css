@@ -237,25 +237,52 @@ textarea { resize: vertical; line-height: 1.9; }
   width: 100%;
   margin-top: 28px;
   font-family: var(--serif-jp);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: .42em;
-  text-indent: .42em;
-  color: var(--ink-0);
-  background: linear-gradient(170deg, var(--gold-bright), var(--gold) 55%, var(--gold-dim));
+  font-size: 15.5px;
+  font-weight: 700;
+  letter-spacing: .34em;
+  text-indent: .34em;
+  color: #4a2f08;
+  background: linear-gradient(180deg, #ffeec1 0%, #f1cf86 46%, #dcae58 100%);
   border: none;
-  padding: 16px 28px;
+  border-radius: 100px;
+  padding: 18px 30px;
   cursor: pointer;
   position: relative;
-  transition: transform .25s, box-shadow .35s, filter .3s;
-  box-shadow: 0 8px 30px rgba(201,168,106,.22);
+  overflow: hidden;
+  transition: transform .3s cubic-bezier(.34,1.7,.5,1), box-shadow .35s, filter .3s;
+  box-shadow:
+    0 12px 28px rgba(201,168,106,.42),
+    0 1px 0 rgba(255,255,255,.7) inset,
+    0 -7px 16px rgba(138,116,72,.32) inset;
+}
+/* きらめきが定期的に走る */
+.btn-primary::before {
+  content: "";
+  position: absolute; top: 0; left: -70%;
+  width: 55%; height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.7), transparent);
+  transform: skewX(-18deg);
+  animation: btn-shimmer 3.4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes btn-shimmer {
+  0%, 55% { left: -70%; }
+  100% { left: 140%; }
 }
 .btn-primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  filter: brightness(1.08);
-  box-shadow: 0 14px 44px rgba(201,168,106,.34);
+  transform: translateY(-3px) scale(1.03);
+  filter: brightness(1.05) saturate(1.12);
+  box-shadow:
+    0 18px 40px rgba(201,168,106,.52),
+    0 0 24px rgba(233,211,160,.45),
+    0 1px 0 rgba(255,255,255,.8) inset,
+    0 -7px 16px rgba(138,116,72,.32) inset;
 }
-.btn-primary:disabled { opacity: .35; cursor: not-allowed; }
+.btn-primary:active:not(:disabled) {
+  transform: translateY(-1px) scale(.97);
+  transition-duration: .09s;
+}
+.btn-primary:disabled { opacity: .4; cursor: not-allowed; }
 
 .btn-ghost {
   font-family: var(--serif-jp);
