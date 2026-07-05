@@ -1133,3 +1133,36 @@ $("#btn-again").addEventListener("click", () => {
   Sound.ambientStop();
   showScreen("#screen-intro");
 });
+
+/* ============================================================
+   体験期間ゲート
+   - 各利用者が「初めて開いた日」から TRIAL_DAYS 日で終了
+   - 期限が切れたら鑑定画面の代わりに終了ゲートを表示し、
+     作り方ページ（guide.html）へ誘導する
+   - URL ?reset=体験リセット / ?expired=強制終了プレビュー（デモ・検証用）
+   ※ 静的サイトでの簡易ゲート。厳密な期限管理・APIキー保護は
+      本番のサーバー版で行う想定。
+   ============================================================ */
+const TRIAL_DAYS = 14;
+const TRIAL_KEY = "hoshiyomi-first-access";
+
+function trialStatus() {
+  const p = new URLSearchParams(location.search);
+  if (p.has("reset")) localStorage.removeItem(TRIAL_KEY);
+  if (p.has("expired")) return { expired: true, remainDays: 0 };
+  let first = Number(localStorage.getItem(TRIAL_KEY));
+  if (!first) { first = Date.now(); localStorage.setItem(TRIAL_KEY, String(first)); }
+  const remainDays = Math.ceil((TRIAL_DAYS * 864e5 - (Date.now() - first)) / 864e5);
+  return { expired: remainDays <= 0, remainDays };
+}
+
+(function initTrial() {
+  const st = trialStatus();
+  if (st.expired) {
+    $("#expired-seal").innerHTML = sealSVG(72);
+    showScreen("#screen-expired");
+  } else {
+    const badge = $("#trial-badge");
+    if (badge) badge.textContent = `体験版　残り ${st.remainDays} 日`;
+  }
+})();

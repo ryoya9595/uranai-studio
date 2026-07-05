@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>星詠ノ書の作り方 — AIでAI占いツールを作る</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Cinzel:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink-0:#07090f; --ink-1:#0c101d; --ink-2:#131a2e; --ink-3:#1c2440;
+  --gold:#c9a86a; --gold-bright:#e9d3a0; --gold-dim:#8a7448;
+  --moon:#aab4d4; --text:#d8dcea; --text-dim:#7d86a6;
+  --serif-jp:"Shippori Mincho B1","Hiragino Mincho ProN",serif;
+  --serif-en:"Cormorant Garamond",Georgia,serif;
+  --display-en:"Cinzel","Cormorant Garamond",serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:var(--serif-jp);
+  color:var(--text);
+  background:
+    radial-gradient(ellipse 90% 55% at 50% -10%, rgba(201,168,106,.10), transparent 60%),
+    radial-gradient(ellipse 70% 60% at 85% 110%, rgba(50,68,130,.18), transparent 65%),
+    linear-gradient(180deg,#07090f 0%,#0c101d 38%,#0a0e1b 100%);
+  background-attachment:fixed;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  line-height:1.9;
+}
+.wrap{max-width:760px;margin:0 auto;padding:72px 24px 100px;}
+
+/* ヘッダー */
+.g-head{text-align:center;margin-bottom:70px;}
+.orn{width:1px;height:56px;margin:0 auto;background:linear-gradient(180deg,transparent,var(--gold));position:relative;}
+.orn::after{content:"";position:absolute;left:50%;bottom:-4px;width:7px;height:7px;transform:translateX(-50%) rotate(45deg);border:1px solid var(--gold);}
+.g-kicker{font-family:var(--display-en);font-size:11px;letter-spacing:.5em;text-indent:.5em;color:var(--gold-dim);margin:24px 0 18px;}
+.g-title{font-size:clamp(30px,5vw,44px);font-weight:700;letter-spacing:.16em;color:var(--gold-bright);text-shadow:0 0 38px rgba(201,168,106,.3);line-height:1.5;}
+.g-sub{margin-top:22px;font-size:14px;line-height:2.2;color:var(--text-dim);letter-spacing:.08em;}
+
+/* リード */
+.g-lead{
+  border:1px solid rgba(201,168,106,.24);
+  background:linear-gradient(170deg,rgba(28,36,64,.34),rgba(10,13,24,.5));
+  padding:34px 34px;margin-bottom:64px;position:relative;
+}
+.g-lead::before,.g-lead::after{content:"";position:absolute;width:16px;height:16px;border-color:var(--gold);border-style:solid;}
+.g-lead::before{top:8px;left:8px;border-width:1px 0 0 1px;}
+.g-lead::after{bottom:8px;right:8px;border-width:0 1px 1px 0;}
+.g-lead p{font-size:14.5px;letter-spacing:.05em;color:var(--text);}
+.g-lead p+p{margin-top:16px;}
+.g-lead b{color:var(--gold-bright);font-weight:600;}
+
+/* セクション見出し */
+.g-h2{font-size:12px;letter-spacing:.4em;text-indent:.4em;color:var(--gold);text-align:center;margin:0 0 40px;}
+
+/* ステップ */
+.steps{display:flex;flex-direction:column;gap:26px;margin-bottom:70px;}
+.step{
+  display:grid;grid-template-columns:64px 1fr;gap:22px;align-items:start;
+  border:1px solid rgba(201,168,106,.18);
+  background:linear-gradient(170deg,rgba(28,36,64,.28),rgba(10,13,24,.42));
+  padding:26px 28px;
+}
+.step-no{
+  font-family:var(--serif-en);font-size:40px;font-weight:500;
+  color:var(--gold-bright);text-align:center;line-height:1;
+  padding-top:4px;text-shadow:0 0 24px rgba(201,168,106,.35);
+}
+.step-body h3{font-size:17px;font-weight:600;letter-spacing:.1em;color:var(--gold-bright);margin-bottom:10px;}
+.step-body p{font-size:13.5px;line-height:2.1;color:var(--text);letter-spacing:.03em;}
+.step-body .tip{
+  margin-top:14px;font-size:12px;line-height:1.9;color:var(--moon);
+  padding:10px 14px;border-left:2px solid var(--gold-dim);background:rgba(201,168,106,.05);
+}
+.step-body code{
+  font-family:var(--serif-en);font-size:13px;color:var(--gold-bright);
+  background:rgba(7,9,15,.6);padding:2px 8px;border:1px solid var(--ink-3);letter-spacing:.02em;
+}
+
+/* 注意ボックス */
+.g-note{
+  border:1px solid rgba(176,74,90,.4);
+  background:linear-gradient(170deg,rgba(60,30,40,.3),rgba(10,13,24,.4));
+  padding:26px 30px;margin-bottom:64px;
+}
+.g-note h3{font-size:14px;letter-spacing:.14em;color:#d98a95;margin-bottom:12px;}
+.g-note p{font-size:13px;line-height:2.1;color:var(--text);letter-spacing:.03em;}
+.g-note b{color:#e9b3ba;}
+
+/* CTA */
+.g-cta{text-align:center;padding:56px 30px;border-top:1px solid rgba(201,168,106,.2);}
+.g-cta h2{font-size:22px;font-weight:600;letter-spacing:.14em;color:var(--gold-bright);margin-bottom:18px;line-height:1.7;}
+.g-cta p{font-size:13.5px;line-height:2.1;color:var(--text-dim);letter-spacing:.05em;margin-bottom:30px;}
+.g-btn{
+  display:inline-block;font-family:var(--serif-jp);font-size:14px;font-weight:700;
+  letter-spacing:.28em;text-indent:.28em;color:#4a2f08;text-decoration:none;
+  background:linear-gradient(180deg,#ffeec1 0%,#f1cf86 46%,#dcae58 100%);
+  border-radius:100px;padding:16px 44px;position:relative;overflow:hidden;
+  box-shadow:0 12px 28px rgba(201,168,106,.4),0 1px 0 rgba(255,255,255,.7) inset,0 -7px 16px rgba(138,116,72,.3) inset;
+  transition:transform .3s cubic-bezier(.34,1.7,.5,1),box-shadow .35s,filter .3s;
+}
+.g-btn:hover{transform:translateY(-3px) scale(1.03);filter:brightness(1.05) saturate(1.1);box-shadow:0 18px 40px rgba(201,168,106,.5),0 0 24px rgba(233,211,160,.45),0 1px 0 rgba(255,255,255,.8) inset,0 -7px 16px rgba(138,116,72,.3) inset;}
+.g-back{display:inline-block;margin-top:26px;font-size:12px;letter-spacing:.2em;color:var(--text-dim);text-decoration:none;transition:color .3s;}
+.g-back:hover{color:var(--gold);}
+
+.g-foot{text-align:center;margin-top:70px;font-family:var(--display-en);font-size:9.5px;letter-spacing:.5em;color:#444d6e;}
+
+@media(max-width:640px){
+  .step{grid-template-columns:1fr;gap:8px;}
+  .step-no{text-align:left;font-size:32px;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="g-head">
+    <div class="orn"></div>
+    <p class="g-kicker">HOW IT'S MADE</p>
+    <h1 class="g-title">星詠ノ書の作り方</h1>
+    <p class="g-sub">— AIエージェントで「AI占いツール」を作る道のり —</p>
+  </header>
+
+  <div class="g-lead">
+    <p>ご覧いただいた占いツール「星詠ノ書」は、<b>プログラミングの専門知識がなくても</b>、AIエージェント（Claude Code など）に指示するだけで形になります。</p>
+    <p>「ChatGPTにプロンプトを打って占ってもらう」段階から一歩進んで、<b>“占い体験そのものをツールとして作り、配布・販売できる”</b> ——それがこのページで案内する世界です。以下は、実際に星詠ノ書が生まれるまでの流れです。</p>
+  </div>
+
+  <p class="g-h2">— 六つの工程 —</p>
+  <div class="steps">
+
+    <div class="step">
+      <div class="step-no">1</div>
+      <div class="step-body">
+        <h3>企画 — 何を、誰に占うか決める</h3>
+        <p>占術（タロット／西洋占星術／数秘術など）と、届けたい相手・シーンを決めます。星詠ノ書は「恋愛・仕事・金運」を、神秘的な体験とともに“持ち帰れる鑑定書”にする、という設計にしました。</p>
+        <div class="tip">コツ：最初に「どんな成果物が手元に残るか（PDF・画像など）」を決めておくと、売れる形に直結します。</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-no">2</div>
+      <div class="step-body">
+        <h3>AIエージェントに作らせる</h3>
+        <p>Claude Code などのAIエージェントに、企画の内容を伝えて実装してもらいます。「こういう占いツールを、この雰囲気で、こんな流れで」と会話するだけで、画面・ロジック・演出のコードが出来上がっていきます。</p>
+        <div class="tip">伝え方の例：<code>ダークで神秘的な世界観</code> / <code>カードをめくる演出</code> / <code>鑑定書をPDFで出せるように</code></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-no">3</div>
+      <div class="step-body">
+        <h3>デザインと演出を磨く</h3>
+        <p>世界観づくりが“凄さ”の核心です。配色・フォント・アニメーション（星屑・カードめくり・鑑定文のタイプ表示・音）を重ねて、「おお！」と感じる体験にしていきます。ここもAIと対話しながら細部を詰めます。</p>
+        <div class="tip">星詠ノ書では「墨色の夜空 × アンティークゴールド」に統一し、落款印まで添えて“本物の鑑定書”感を出しました。</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-no">4</div>
+      <div class="step-body">
+        <h3>公開する（固定URL）</h3>
+        <p>完成したツールをネット上に公開して、誰でも開けるURLにします。静的なサイトなら無料で公開でき、URLも固定。SNSやセミナー資料に貼って、その場で体験してもらえます。</p>
+        <div class="tip">配布の仕方次第で「体験期間」を設ける（例：2週間で作り方案内に切り替え）といった導線も組めます。</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-no">5</div>
+      <div class="step-body">
+        <h3>AIを組み込んで“本物の鑑定”に</h3>
+        <p>体験版のロジックを、AI（Claude や ChatGPT の API）による本物の文章生成に差し替えると、一人ひとりに深くパーソナライズされた鑑定が出せるようになります。</p>
+        <div class="tip">重要：APIキーは配布ファイルに置かず、必ず“サーバー”側に隠します。利用回数や期間の管理もサーバーで行うと安全・確実です。</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-no">6</div>
+      <div class="step-body">
+        <h3>届ける・販売する</h3>
+        <p>完成した鑑定（PDF鑑定書・結果画像）は、そのまま“売れる納品物”になります。ココナラ等のスキル販売や、自分の発信からの導線にのせて、体験を価値に変えていきます。</p>
+        <div class="tip">「AIで作った」ことより「どんな体験・成果物が手に入るか」を主役に見せるのが、選ばれるコツです。</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="g-note">
+    <h3>— ひとつだけ、大切な注意 —</h3>
+    <p>AIのAPIを組み込む本格版では、<b>APIキーを配布ファイルに絶対に埋め込まないこと</b>。埋め込むと誰でも取り出せてしまい、利用料が想定外に膨らむ危険があります。キーはサーバーに隠し、期間・回数の制限もサーバー側で管理する——これが安全に運用する鉄則です。</p>
+  </div>
+
+  <div class="g-cta">
+    <h2>あなたも、AIで<br>自分だけのツールを作ってみませんか</h2>
+    <p>この案内は入口です。具体的な作り方・実演は、別途ご案内しています。<br>まずは「作ってみたい占い」を一つ、思い浮かべてみてください。</p>
+    <a href="#" class="g-btn">詳しい作り方・講座の案内</a>
+    <br>
+    <a href="index.html?reset=1" class="g-back">← 星詠ノ書をもう一度ひらく</a>
+  </div>
+
+  <p class="g-foot">HOSHIYOMI — AI FORTUNE ATELIER</p>
+
+</div>
+</body>
+</html>
