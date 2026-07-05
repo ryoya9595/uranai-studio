@@ -1143,6 +1143,12 @@ $("#btn-again").addEventListener("click", () => {
    ※ 静的サイトでの簡易ゲート。厳密な期限管理・APIキー保護は
       本番のサーバー版で行う想定。
    ============================================================ */
+/* ---- 期限の設定（ここだけ書き換えればOK） ----
+   TRIAL_DEADLINE: "2026-07-20" のように書くと、その日の0時以降は
+   全員が終了画面になる（配布日に関係なく一斉終了）。""なら無効。
+   TRIAL_DAYS: 各自の初回アクセスからの体験日数。
+   両方有効な場合は「早く来た方」で終了する。 */
+const TRIAL_DEADLINE = "";
 const TRIAL_DAYS = 14;
 const TRIAL_KEY = "hoshiyomi-first-access";
 
@@ -1150,9 +1156,23 @@ function trialStatus() {
   const p = new URLSearchParams(location.search);
   if (p.has("reset")) localStorage.removeItem(TRIAL_KEY);
   if (p.has("expired")) return { expired: true, remainDays: 0 };
+
+  /* 固定終了日（全員一斉） */
+  let deadlineRemain = Infinity;
+  if (TRIAL_DEADLINE) {
+    const dl = new Date(TRIAL_DEADLINE + "T00:00:00");
+    if (!isNaN(dl)) {
+      if (Date.now() >= dl.getTime()) return { expired: true, remainDays: 0 };
+      deadlineRemain = Math.ceil((dl.getTime() - Date.now()) / 864e5);
+    }
+  }
+
+  /* 各自の初回アクセス基準 */
   let first = Number(localStorage.getItem(TRIAL_KEY));
   if (!first) { first = Date.now(); localStorage.setItem(TRIAL_KEY, String(first)); }
-  const remainDays = Math.ceil((TRIAL_DAYS * 864e5 - (Date.now() - first)) / 864e5);
+  const personalRemain = Math.ceil((TRIAL_DAYS * 864e5 - (Date.now() - first)) / 864e5);
+
+  const remainDays = Math.min(personalRemain, deadlineRemain);
   return { expired: remainDays <= 0, remainDays };
 }
 
