@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>星詠ノ書 — APIの設定</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Cinzel:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink-0:#07090f; --ink-1:#0c101d; --ink-2:#131a2e; --ink-3:#1c2440;
+  --gold:#d8b878; --gold-bright:#f0dcae; --gold-dim:#b09468;
+  --moon:#c3cce8; --text:#e7eaf5; --text-dim:#a3accb; --crimson:#cc6470; --ok:#8fccae;
+  --serif-jp:"Shippori Mincho B1","Hiragino Mincho ProN",serif;
+  --serif-en:"Cormorant Garamond",Georgia,serif;
+  --display-en:"Cinzel","Cormorant Garamond",serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:var(--serif-jp); color:var(--text);
+  background:
+    radial-gradient(ellipse 90% 55% at 50% -10%, rgba(201,168,106,.10), transparent 60%),
+    radial-gradient(ellipse 70% 60% at 85% 110%, rgba(50,68,130,.18), transparent 65%),
+    linear-gradient(180deg,#07090f 0%,#0c101d 38%,#0a0e1b 100%);
+  background-attachment:fixed; min-height:100vh; -webkit-font-smoothing:antialiased; line-height:1.9;
+}
+.wrap{max-width:720px;margin:0 auto;padding:64px 24px 100px;}
+.g-head{text-align:center;margin-bottom:48px;}
+.orn{width:1px;height:52px;margin:0 auto;background:linear-gradient(180deg,transparent,var(--gold));position:relative;}
+.orn::after{content:"";position:absolute;left:50%;bottom:-4px;width:7px;height:7px;transform:translateX(-50%) rotate(45deg);border:1px solid var(--gold);}
+.g-kicker{font-family:var(--display-en);font-size:11px;letter-spacing:.5em;text-indent:.5em;color:var(--gold-dim);margin:22px 0 16px;}
+.g-title{font-size:clamp(28px,5vw,40px);font-weight:700;letter-spacing:.16em;color:var(--gold-bright);text-shadow:0 0 38px rgba(201,168,106,.3);line-height:1.5;}
+.g-sub{margin-top:20px;font-size:14px;line-height:2.1;color:var(--text-dim);letter-spacing:.06em;}
+
+.g-lead{
+  border:1px solid rgba(201,168,106,.26);
+  background:linear-gradient(170deg,rgba(34,43,74,.5),rgba(12,16,29,.6));
+  padding:28px 30px;margin-bottom:52px;position:relative;
+}
+.g-lead::before,.g-lead::after{content:"";position:absolute;width:16px;height:16px;border-color:var(--gold);border-style:solid;}
+.g-lead::before{top:8px;left:8px;border-width:1px 0 0 1px;}
+.g-lead::after{bottom:8px;right:8px;border-width:0 1px 1px 0;}
+.g-lead p{font-size:14px;letter-spacing:.04em;color:var(--text);}
+.g-lead p+p{margin-top:14px;}
+.g-lead b{color:var(--gold-bright);font-weight:600;}
+
+.g-h2{font-size:12px;letter-spacing:.4em;text-indent:.4em;color:var(--gold);text-align:center;margin:0 0 32px;}
+.steps{display:flex;flex-direction:column;gap:22px;margin-bottom:52px;}
+.step{
+  display:grid;grid-template-columns:56px 1fr;gap:20px;align-items:start;
+  border:1px solid rgba(201,168,106,.2);
+  background:linear-gradient(170deg,rgba(34,43,74,.4),rgba(12,16,29,.5));
+  padding:24px 26px;
+}
+.step-no{font-family:var(--serif-en);font-size:38px;font-weight:500;color:var(--gold-bright);text-align:center;line-height:1;padding-top:2px;text-shadow:0 0 24px rgba(201,168,106,.35);}
+.step-body h3{font-size:16px;font-weight:600;letter-spacing:.08em;color:var(--gold-bright);margin-bottom:10px;}
+.step-body p{font-size:13.5px;line-height:2.05;color:var(--text);letter-spacing:.02em;}
+.step-body a.inl{color:var(--gold);text-decoration:underline;text-underline-offset:3px;}
+.step-body .tip{margin-top:12px;font-size:12px;line-height:1.9;color:var(--moon);padding:10px 14px;border-left:2px solid var(--gold-dim);background:rgba(201,168,106,.05);}
+
+/* キー入力カード */
+.key-card{
+  border:1px solid rgba(201,168,106,.32);
+  background:linear-gradient(165deg,rgba(34,43,74,.6),rgba(16,21,37,.78));
+  padding:32px 30px;margin-bottom:20px;position:relative;
+}
+.key-card .label{font-size:12.5px;font-weight:500;letter-spacing:.14em;color:var(--moon);display:block;margin-bottom:10px;}
+.key-card input{
+  width:100%;background:rgba(26,33,58,.66);border:1px solid rgba(150,168,210,.3);
+  border-bottom-color:rgba(216,184,120,.6);color:#f2f4fb;font-family:var(--serif-en);
+  font-size:15px;letter-spacing:.03em;padding:13px 14px;outline:none;transition:border-color .3s,box-shadow .3s;
+}
+.key-card input:focus{border-color:var(--gold);box-shadow:0 0 0 1px rgba(216,184,120,.28);}
+.key-card input::placeholder{color:#7a83a4;}
+.g-btn{
+  display:block;width:100%;margin-top:20px;font-family:var(--serif-jp);font-size:15px;font-weight:700;
+  letter-spacing:.24em;text-indent:.24em;color:#4a2f08;border:none;cursor:pointer;
+  background:linear-gradient(180deg,#ffeec1 0%,#f1cf86 46%,#dcae58 100%);
+  border-radius:100px;padding:16px 30px;position:relative;overflow:hidden;
+  box-shadow:0 12px 28px rgba(201,168,106,.42),0 1px 0 rgba(255,255,255,.7) inset,0 -7px 16px rgba(138,116,72,.3) inset;
+  transition:transform .3s cubic-bezier(.34,1.7,.5,1),box-shadow .35s,filter .3s;
+}
+.g-btn:hover:not(:disabled){transform:translateY(-2px) scale(1.01);filter:brightness(1.05) saturate(1.1);}
+.g-btn:disabled{opacity:.5;cursor:not-allowed;}
+.save-msg{min-height:1.4em;margin-top:14px;font-size:12.5px;letter-spacing:.03em;text-align:center;color:var(--text-dim);}
+.save-msg.ok{color:var(--gold-bright);}
+.save-msg.err{color:var(--crimson);}
+.key-sub{margin-top:14px;font-size:11.5px;line-height:1.9;color:var(--text-dim);text-align:center;}
+.key-sub a{color:var(--gold-dim);cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
+
+.g-note{border:1px solid rgba(176,74,90,.36);background:linear-gradient(170deg,rgba(60,30,40,.28),rgba(12,16,29,.4));padding:22px 26px;margin:8px 0 40px;}
+.g-note h3{font-size:13px;letter-spacing:.12em;color:#e0929c;margin-bottom:10px;}
+.g-note p{font-size:12.5px;line-height:2;color:var(--text);letter-spacing:.02em;}
+.g-note b{color:#eeb6bc;}
+
+.g-back{display:block;text-align:center;margin-top:18px;font-size:12px;letter-spacing:.18em;color:var(--text-dim);text-decoration:none;}
+.g-back:hover{color:var(--gold);}
+.g-foot{text-align:center;margin-top:56px;font-family:var(--display-en);font-size:9.5px;letter-spacing:.5em;color:#444d6e;}
+@media(max-width:640px){.step{grid-template-columns:1fr;gap:8px;}.step-no{text-align:left;font-size:30px;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="g-head">
+    <div class="orn"></div>
+    <p class="g-kicker">API SETTINGS</p>
+    <h1 class="g-title">APIの設定</h1>
+    <p class="g-sub">— ご自身の無料AIキーで、星詠ノ書を使い続ける —</p>
+  </header>
+
+  <div class="g-lead">
+    <p>体験期間をお楽しみいただき、ありがとうございました。ここから先は、<b>ご自身の無料AIキー（Google Gemini）</b>を設定すると、引き続き星詠ノ書で鑑定を受けられます。</p>
+    <p>キーは<b>この端末（ブラウザ）の中だけ</b>に保存され、外部には送られません。鑑定はあなたのGoogleアカウントで動きます。Geminiには十分な無料枠があるので、通常のご利用なら費用はかかりません。</p>
+  </div>
+
+  <p class="g-h2">— 三つの手順 —</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-no">1</div>
+      <div class="step-body">
+        <h3>Google AI Studio をひらく</h3>
+        <p><a class="inl" href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> を開き、お手持ちのGoogleアカウントでログインします。</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-no">2</div>
+      <div class="step-body">
+        <h3>APIキーを無料で発行する</h3>
+        <p>「Create API key（APIキーを作成）」を押すと、<code style="color:var(--gold-bright)">AIza…</code> で始まる文字列が発行されます。これをコピーしてください。</p>
+        <div class="tip">クレジットカードの登録は不要です。無料枠の範囲で鑑定を受けられます。</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-no">3</div>
+      <div class="step-body">
+        <h3>下の欄に貼り付けて保存</h3>
+        <p>コピーしたキーを下の入力欄に貼り付け、「保存して星詠ノ書をひらく」を押すだけ。キーが有効か自動で確認します。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="key-card">
+    <label class="label" for="api-key">Gemini APIキー</label>
+    <input type="password" id="api-key" placeholder="AIza… で始まるキーを貼り付け" autocomplete="off" spellcheck="false">
+    <button class="g-btn" id="save-key">保存して星詠ノ書をひらく</button>
+    <div class="save-msg" id="save-msg"></div>
+    <p class="key-sub">
+      <a id="toggle-vis">キーを表示</a>　·　<a id="clear-key">保存したキーを削除</a>
+    </p>
+  </div>
+
+  <div class="g-note">
+    <h3>— 安全のために —</h3>
+    <p>キーは<b>この端末のブラウザにのみ</b>保存されます（サーバーには送りません）。共用パソコンでは使い終わったら「保存したキーを削除」を押してください。キーは他人に教えないようご注意ください。</p>
+  </div>
+
+  <a class="g-back" href="index.html?reset=1">← 星詠ノ書のトップへ</a>
+  <p class="g-foot">HOSHIYOMI — AI FORTUNE ATELIER</p>
+</div>
+
+<script>
+"use strict";
+const KEY_STORE = "hoshiyomi-user-key";
+const MODEL = "gemini-2.0-flash";
+const $ = (id) => document.getElementById(id);
+const input = $("api-key"), msgEl = $("save-msg"), saveBtn = $("save-key");
+
+try { input.value = localStorage.getItem(KEY_STORE) || ""; } catch (_) {}
+
+function setMsg(t, cls) { msgEl.textContent = t; msgEl.className = "save-msg" + (cls ? " " + cls : ""); }
+
+$("toggle-vis").addEventListener("click", () => {
+  input.type = input.type === "password" ? "text" : "password";
+  $("toggle-vis").textContent = input.type === "password" ? "キーを表示" : "キーを隠す";
+});
+$("clear-key").addEventListener("click", () => {
+  try { localStorage.removeItem(KEY_STORE); } catch (_) {}
+  input.value = "";
+  setMsg("保存していたキーを削除しました。", "");
+});
+
+saveBtn.addEventListener("click", async () => {
+  const k = input.value.trim();
+  if (!k) { setMsg("キーを入力してください。", "err"); return; }
+  if (!/^AIza[0-9A-Za-z_\-]{20,}$/.test(k)) {
+    setMsg("キーの形式が正しくないようです（通常 AIza… で始まります）。", "err"); return;
+  }
+  saveBtn.disabled = true;
+  setMsg("キーを確認しています…", "");
+  try {
+    const res = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/" + MODEL + ":generateContent?key=" + encodeURIComponent(k),
+      { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ contents: [{ parts: [{ text: "ping" }] }], generationConfig: { maxOutputTokens: 5 } }) }
+    );
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      const detail = (e && e.error && e.error.message) ? e.error.message : ("エラー " + res.status);
+      setMsg("キーが使えませんでした：" + detail, "err");
+      saveBtn.disabled = false; return;
+    }
+  } catch (_) {
+    setMsg("通信に失敗しました。ネット環境をご確認ください。", "err");
+    saveBtn.disabled = false; return;
+  }
+  try { localStorage.setItem(KEY_STORE, k); } catch (_) {}
+  setMsg("保存しました。星詠ノ書をひらきます…", "ok");
+  setTimeout(() => { location.href = "index.html"; }, 900);
+});
+</script>
+</body>
+</html>

@@ -325,6 +325,118 @@ function generateReading(input) {
 }
 
 /* ============================================================
+   AI鑑定エンジン（Gemini）
+   - 体験版：Cloudflare Worker（Proxy）経由でキーを隠して呼ぶ
+   - 各自キー設定後：ブラウザから自分のキーで直接呼ぶ
+   - どちらも無ければ：ローカル鑑定文にフォールバック（壊れない）
+   ============================================================ */
+const CFG = (typeof window !== "undefined" && window.HOSHIYOMI_CONFIG) || {};
+const USER_KEY_STORE = "hoshiyomi-user-key";
+function getUserKey() { try { return localStorage.getItem(USER_KEY_STORE) || ""; } catch (_) { return ""; } }
+
+const READING_SCHEMA = {
+  type: "object",
+  properties: {
+    empathy:   { type: "string" },
+    analysis:  { type: "string" },
+    tarotText: { type: "string" },
+    guidance:  { type: "string" },
+    closing:   { type: "string" },
+    oracle:    { type: "string" },
+  },
+  required: ["empathy", "analysis", "tarotText", "guidance", "closing"],
+};
+
+function buildReadingPrompt(r) {
+  const POS = ["過去", "現在", "未来"];
+  const cardLines = r.cards.map((pc, i) =>
+    `${POS[i]}：${pc.card.name}（${pc.reversed ? "逆位置" : "正位置"}）— 象徴：${(pc.reversed ? pc.card.rev : pc.card.up).join("・")}`
+  ).join("\n");
+  const topicLabel = (TOPICS[r.topic] && TOPICS[r.topic].label) || r.topic;
+  return [
+    "あなたは「星詠ノ書」という和風の占い鑑定書を綴る、格調高い占い師です。",
+    "墨色の夜空とアンティークゴールドの世界観にふさわしい、あたたかく詩的で神秘的な日本語で鑑定文を書いてください。",
+    "相談者は必ず「" + r.name + "さん」と名前で呼び、断定を避けて「流れ」「兆し」「可能性」として穏やかに伝えます。",
+    "マークダウン記号や見出し記号は使わず、自然な文章のみ。各項目は3〜5文で、テンプレ感を避け、この人だけの言葉で綴ること。",
+    "",
+    "【相談者】" + r.name + "さん",
+    "【生年月日】" + r.y + "年" + r.m + "月" + r.d + "日",
+    "【占うテーマ】" + topicLabel,
+    r.concern ? "【心にあること】" + r.concern : "【心にあること】特になし",
+    "【星位】" + r.zodiac.name + "（" + r.zodiac.element + "のエレメント／守護星・" + r.zodiac.planet + "）本質：" + r.zodiac.trait,
+    "【数秘】" + r.lifePath + "「" + r.numerology.name + "」" + r.numerology.essence,
+    "【守護色】" + r.color.name,
+    "【引かれた三枚の札】",
+    cardLines,
+    "",
+    "次のJSON形式で、各キーに鑑定文（プレーンな日本語の文章）を入れて返してください：",
+    "empathy＝相談者へのやさしい導入と共感／analysis＝星位と数秘から読むこの人の本質／tarotText＝三枚の札が示す過去・現在・未来のひと続きの物語／guidance＝明日への具体的であたたかい後押し／closing＝締めのことば／oracle＝今日の一文（15〜28字の詩的な箴言）",
+  ].join("\n");
+}
+
+function parseReadingJSON(text) {
+  if (!text) return null;
+  let t = String(text).trim();
+  const a = t.indexOf("{"), b = t.lastIndexOf("}");
+  if (a >= 0 && b > a) t = t.slice(a, b + 1);
+  try {
+    const o = JSON.parse(t);
+    if (o && (o.empathy || o.analysis || o.tarotText)) return o;
+  } catch (_) {}
+  return null;
+}
+
+async function callGeminiDirect(key, prompt) {
+  const model = CFG.MODEL || "gemini-2.0-flash";
+  const res = await fetch(
+    "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent?key=" + encodeURIComponent(key),
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 1.05, maxOutputTokens: 1400,
+          responseMimeType: "application/json", responseSchema: READING_SCHEMA,
+        },
+      }),
+    }
+  );
+  if (!res.ok) throw new Error("gemini " + res.status);
+  const data = await res.json();
+  return (data && data.candidates && data.candidates[0] && data.candidates[0].content &&
+    data.candidates[0].content.parts && data.candidates[0].content.parts[0] &&
+    data.candidates[0].content.parts[0].text) || "";
+}
+
+const Engine = {
+  /* 成功時は {empathy, analysis, ...} を返す。使えない時は null（ローカル文のまま） */
+  async generateReadingText(r) {
+    try {
+      const prompt = buildReadingPrompt(r);
+      const userKey = getUserKey();
+      let raw = "";
+      if (userKey) {
+        raw = await callGeminiDirect(userKey, prompt);
+      } else if (CFG.PROXY_URL) {
+        const res = await fetch(CFG.PROXY_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt }),
+        });
+        if (!res.ok) throw new Error("proxy " + res.status);
+        raw = (await res.json()).text || "";
+      } else {
+        return null;
+      }
+      return parseReadingJSON(raw);
+    } catch (_) {
+      return null;
+    }
+  },
+};
+
+/* ============================================================
    UI 制御
    ============================================================ */
 
@@ -573,8 +685,25 @@ $("#btn-reveal").addEventListener("click", () => {
     setTimeout(() => { inner.classList.add("flipped"); Sound.flip(); }, i * 600);
   });
   $("#btn-reveal").disabled = true;
-  setTimeout(() => {
-    buildResult();
+
+  /* 決定的な鑑定結果を先に計算（星位・数秘・スコア・ローカル鑑定文） */
+  const [by, bm, bd] = $("#in-birth").value.split("-").map(Number);
+  const result = generateReading({
+    name: $("#in-name").value.trim(),
+    y: by, m: bm, d: bd,
+    topic: state.topic,
+    concern: $("#in-concern").value.trim(),
+    cards: state.pickedCards,
+  });
+  state.result = result;
+
+  /* AI鑑定文を、カードめくり演出と並行して取得（失敗時はローカル文のまま） */
+  const aiPromise = Engine.generateReadingText(result);
+
+  setTimeout(async () => {
+    const ai = await Promise.race([aiPromise, sleep(6000).then(() => null)]);
+    if (ai) result.text = Object.assign({}, result.text, ai);
+    buildResult(result);
     showScreen("#screen-result");
     Sound.reveal();
     Sound.ambientStart();
@@ -583,17 +712,8 @@ $("#btn-reveal").addEventListener("click", () => {
 
 /* ---------- 画面4: 結果 ---------- */
 
-function buildResult() {
-  const name = $("#in-name").value.trim();
-  const [y, m, d] = $("#in-birth").value.split("-").map(Number);
-  const concern = $("#in-concern").value.trim();
-
-  const result = generateReading({
-    name, y, m, d,
-    topic: state.topic,
-    concern,
-    cards: state.pickedCards,
-  });
+function buildResult(result) {
+  const name = result.name;
   state.result = result;
 
   /* ヘッダー */
@@ -1135,54 +1255,25 @@ $("#btn-again").addEventListener("click", () => {
 });
 
 /* ============================================================
-   体験期間ゲート
-   - 各利用者が「初めて開いた日」から TRIAL_DAYS 日で終了
-   - 期限が切れたら鑑定画面の代わりに終了ゲートを表示し、
-     作り方ページ（guide.html）へ誘導する
-   - URL ?reset=体験リセット / ?expired=強制終了プレビュー（デモ・検証用）
-   ※ 静的サイトでの簡易ゲート。厳密な期限管理・APIキー保護は
-      本番のサーバー版で行う想定。
+   体験期間ゲート（手動切り替え）
+   - config.js の EXPIRED を true にすると、自前APIキー未設定の人は
+     expired.html（APIの設定案内）へ誘導される。
+   - 自前キーを設定済みの人は、EXPIRED でも通常どおり利用できる。
+   - URL ?expired=強制プレビュー ／ ?reset=自前キーを消去（検証用）
    ============================================================ */
-/* ---- 期限の設定（ここだけ書き換えればOK） ----
-   TRIAL_DEADLINE: "2026-07-20" のように書くと、その日の0時以降は
-   全員が終了画面になる（配布日に関係なく一斉終了）。""なら無効。
-   TRIAL_DAYS: 各自の初回アクセスからの体験日数。
-   両方有効な場合は「早く来た方」で終了する。 */
-const TRIAL_DEADLINE = "";
-const TRIAL_DAYS = 14;
-const TRIAL_KEY = "hoshiyomi-first-access";
-
-function trialStatus() {
+(function initGate() {
   const p = new URLSearchParams(location.search);
-  if (p.has("reset")) localStorage.removeItem(TRIAL_KEY);
-  if (p.has("expired")) return { expired: true, remainDays: 0 };
+  if (p.has("reset")) { try { localStorage.removeItem(USER_KEY_STORE); } catch (_) {} }
 
-  /* 固定終了日（全員一斉） */
-  let deadlineRemain = Infinity;
-  if (TRIAL_DEADLINE) {
-    const dl = new Date(TRIAL_DEADLINE + "T00:00:00");
-    if (!isNaN(dl)) {
-      if (Date.now() >= dl.getTime()) return { expired: true, remainDays: 0 };
-      deadlineRemain = Math.ceil((dl.getTime() - Date.now()) / 864e5);
-    }
+  const expired = (CFG.EXPIRED === true) || p.has("expired");
+  const hasKey = !!getUserKey();
+
+  if (expired && !hasKey) {
+    location.replace("expired.html");
+    return;
   }
 
-  /* 各自の初回アクセス基準 */
-  let first = Number(localStorage.getItem(TRIAL_KEY));
-  if (!first) { first = Date.now(); localStorage.setItem(TRIAL_KEY, String(first)); }
-  const personalRemain = Math.ceil((TRIAL_DAYS * 864e5 - (Date.now() - first)) / 864e5);
-
-  const remainDays = Math.min(personalRemain, deadlineRemain);
-  return { expired: remainDays <= 0, remainDays };
-}
-
-(function initTrial() {
-  const st = trialStatus();
-  if (st.expired) {
-    $("#expired-seal").innerHTML = sealSVG(72);
-    showScreen("#screen-expired");
-  } else {
-    const badge = $("#trial-badge");
-    if (badge) badge.textContent = `体験版　残り ${st.remainDays} 日`;
-  }
+  /* バッジ表示（自前キー利用中は非表示、それ以外は「体験版」） */
+  const badge = $("#trial-badge");
+  if (badge) badge.textContent = hasKey ? "" : "体験版";
 })();
