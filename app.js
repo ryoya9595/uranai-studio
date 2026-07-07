@@ -1273,7 +1273,7 @@ $("#btn-again").addEventListener("click", () => {
     return;
   }
 
-  /* バッジ表示（自前キー利用中は非表示、それ以外は「体験版」） */
+  /* バッジ表示（自前キー利用中はその旨、それ以外は体験版の案内） */
   const badge = $("#trial-badge");
-  if (badge) badge.textContent = hasKey ? "" : "体験版";
+  if (badge) badge.textContent = hasKey ? "ご自身のAPIキーで利用中" : "体験版　2週間 無料でお試しいただけます";
 })();

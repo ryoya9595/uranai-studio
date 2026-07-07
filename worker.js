@@ -10,7 +10,9 @@
      - MODEL（任意・Variable）… 既定 "gemini-2.0-flash"
    ============================================================ */
 
-const ALLOWED_ORIGIN = "https://ryoya9595.github.io"; // 配布サイトのオリジン
+/* 配布サイトのオリジン。Cloudflareの変数 ALLOWED_ORIGIN に
+   自分のGitHub Pagesのオリジン（例 https://<ユーザー名>.github.io）を入れると、
+   そこ以外からの呼び出しをブロックする。未設定なら制限しない（初期セットアップを簡単にするため）。 */
 const MAX_PROMPT = 6000;   // 過大リクエスト防止
 const MAX_TOKENS = 1400;   // 1回あたりの出力上限（コスト保険）
 
@@ -27,35 +29,38 @@ const READING_SCHEMA = {
   required: ["empathy", "analysis", "tarotText", "guidance", "closing"],
 };
 
-function cors(extra) {
+function cors(allowOrigin, extra) {
   return Object.assign({
-    "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+    "Access-Control-Allow-Origin": allowOrigin || "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Vary": "Origin",
   }, extra || {});
 }
-function json(obj, status) {
+function json(obj, status, allowOrigin) {
   return new Response(JSON.stringify(obj), {
     status: status || 200,
-    headers: cors({ "Content-Type": "application/json" }),
+    headers: cors(allowOrigin, { "Content-Type": "application/json" }),
   });
 }
 
 export default {
   async fetch(request, env) {
-    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors() });
-    if (request.method !== "POST") return new Response("Hoshiyomi proxy is running.", { headers: cors() });
-
-    // オリジン制限（配布サイト以外からの呼び出しをブロック）
+    const allowed = (env.ALLOWED_ORIGIN || "").trim();  // 未設定なら制限しない
     const origin = request.headers.get("Origin") || "";
-    if (origin && origin !== ALLOWED_ORIGIN) return json({ error: "forbidden" }, 403);
+    const ao = allowed || origin || "*";                // CORSヘッダで返すオリジン
 
-    if (!env.GEMINI_API_KEY) return json({ error: "server not configured" }, 500);
+    if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(ao) });
+    if (request.method !== "POST") return new Response("Hoshiyomi proxy is running.", { headers: cors(ao) });
+
+    // オリジン制限（ALLOWED_ORIGIN を設定した場合のみ有効）
+    if (allowed && origin && origin !== allowed) return json({ error: "forbidden" }, 403, ao);
+
+    if (!env.GEMINI_API_KEY) return json({ error: "server not configured" }, 500, ao);
 
     let prompt = "";
     try { prompt = (await request.json()).prompt || ""; } catch (_) {}
-    if (!prompt || prompt.length > MAX_PROMPT) return json({ error: "bad request" }, 400);
+    if (!prompt || prompt.length > MAX_PROMPT) return json({ error: "bad request" }, 400, ao);
 
     const model = env.MODEL || "gemini-2.0-flash";
     const body = {
@@ -74,13 +79,13 @@ export default {
         { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
       );
       const data = await gres.json();
-      if (!gres.ok) return json({ error: "gemini error", detail: data && data.error && data.error.message }, 502);
+      if (!gres.ok) return json({ error: "gemini error", detail: data && data.error && data.error.message }, 502, ao);
       const text = data && data.candidates && data.candidates[0] &&
         data.candidates[0].content && data.candidates[0].content.parts &&
         data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text || "";
-      return json({ text });
+      return json({ text }, 200, ao);
     } catch (e) {
-      return json({ error: "upstream failure" }, 502);
+      return json({ error: "upstream failure" }, 502, ao);
     }
   },
 };

@@ -144,6 +144,49 @@ body::before {
   letter-spacing: .12em;
 }
 
+/* 体験版のご案内 */
+.trial-notice {
+  max-width: 440px;
+  margin: 32px auto 0;
+  border: 1px solid rgba(201,168,106,.32);
+  background: linear-gradient(170deg, rgba(28,36,64,.5), rgba(12,16,29,.55));
+  padding: 18px 22px 20px;
+  text-align: center;
+  position: relative;
+}
+.trial-notice::before, .trial-notice::after {
+  content: "";
+  position: absolute;
+  width: 12px; height: 12px;
+  border-color: var(--gold);
+  border-style: solid;
+}
+.trial-notice::before { top: 6px; left: 6px; border-width: 1px 0 0 1px; }
+.trial-notice::after  { bottom: 6px; right: 6px; border-width: 0 1px 1px 0; }
+.trial-notice-tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .32em;
+  text-indent: .32em;
+  color: #4a2f08;
+  background: linear-gradient(180deg, #f0dcae, #dcae58);
+  padding: 4px 16px;
+  border-radius: 100px;
+  margin-bottom: 12px;
+}
+.trial-notice p {
+  font-size: 12px;
+  line-height: 2;
+  letter-spacing: .05em;
+  color: #b6bfdc;
+}
+.trial-notice b { color: var(--gold-bright); font-weight: 600; }
+@media (max-width: 860px) {
+  .trial-notice { max-width: 100%; }
+  .trial-notice p br { display: none; }
+}
+
 /* --- 入力フォーム --- */
 .form-card {
   background: linear-gradient(165deg, rgba(28,36,64,.5), rgba(12,16,29,.72));
