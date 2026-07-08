@@ -102,11 +102,19 @@ Claude Code になら「`config.js` の PROXY_URL にこのURLを入れて push 
 
 ---
 
-## 5. 体験期間（2週間）の運用
+## 5. ウェビナー配布と体験期間（2週間）の運用
 
-- **切り替えは手動**です。2週間経ったら `config.js` の `EXPIRED` を `true` にして push。
-  - → 自前キー未設定の利用者は自動で **`expired.html`（APIの設定案内）** に流れます。
-  - → Claude Code に「体験を終了して（EXPIREDをtrueにしてpush）」でOK。
+- **ウェビナーごとにURL（リポジトリ）を分けて配布**します。各配布は独立した2週間の体験。
+  - 例：`hoshiyomi-0720`（7/20開催用）、`hoshiyomi-0803`（8/3開催用）など。
+  - 新しいウェビナー版は、Claude Code に「◯月◯日のウェビナー用を新しいURLで作って」と頼めばOK。
+- **2週間後の切り替え**は、Claude Code に「◯◯ウェビナー版を終了して」と伝えるだけ。
+  Claude Code はその配布の `config.js` を次のように編集して push します：
+  1. `EXPIRED: true` … 自前キー未設定の利用者は **`expired.html`（APIの設定案内）** に流れる
+  2. `PROXY_URL: ""` … **このツールから、あなたのAPIキー（Worker）への接続を外す**
+  - → 体験終了後は、**あなたのAPIキーはこのツールから一切使われません**（コード上もProxyを呼びません）。
+  - 開催中の他のウェビナー版が無ければ、Cloudflareの Worker も削除して構いません。
+- **自動終了にしたい場合**：その配布の `config.js` に `EXPIRE_DATE: "開催日+14日"`（例 `"2026-07-22"`）を入れておくと、
+  その日に自動で体験終了案内へ差し替わります（手動切り替え不要）。
 - 終了後、利用者は **`api-setup.html`** から自分のGeminiキーを登録すれば継続利用できます。
 - 検証用URL：
   - `?expired=1` … 終了画面をプレビュー（例 `.../hoshiyomi/?expired=1`）
@@ -121,7 +129,8 @@ Claude Code になら「`config.js` の PROXY_URL にこのURLを入れて push 
 | `index.html` | 占いツール本体（導入→儀式→カード選択→鑑定書） |
 | `style.css` | 全体のデザイン |
 | `app.js` | 占いロジック＋AI呼び出し＋体験期間ゲート |
-| `config.js` | **設定はここだけ**（PROXY_URL / MODEL / EXPIRED） |
+| `config.js` | **設定はここだけ**（PROXY_URL / MODEL / EXPIRED / EXPIRE_DATE） |
+| `CLAUDE.md` | Claude Code 向けの運用ルール（このZipを渡すと自動で読まれる） |
 | `worker.js` | Cloudflare Worker（APIキーを隠す中継役） |
 | `expired.html` | 体験終了画面（「APIの設定を行う」へ誘導） |
 | `api-setup.html` | 各自のGeminiキー登録ページ |

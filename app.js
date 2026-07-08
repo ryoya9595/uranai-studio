@@ -334,6 +334,16 @@ const CFG = (typeof window !== "undefined" && window.HOSHIYOMI_CONFIG) || {};
 const USER_KEY_STORE = "hoshiyomi-user-key";
 function getUserKey() { try { return localStorage.getItem(USER_KEY_STORE) || ""; } catch (_) { return ""; } }
 
+/* 体験期間が終了しているか（EXPIRED=true または EXPIRE_DATE を過ぎた） */
+function isTrialExpired() {
+  if (CFG.EXPIRED === true) return true;
+  if (CFG.EXPIRE_DATE) {
+    const dl = new Date(CFG.EXPIRE_DATE + "T00:00:00");
+    if (!isNaN(dl) && Date.now() >= dl.getTime()) return true;
+  }
+  return false;
+}
+
 const READING_SCHEMA = {
   type: "object",
   properties: {
@@ -418,7 +428,8 @@ const Engine = {
       let raw = "";
       if (userKey) {
         raw = await callGeminiDirect(userKey, prompt);
-      } else if (CFG.PROXY_URL) {
+      } else if (CFG.PROXY_URL && !isTrialExpired()) {
+        /* 体験終了後は配布者（ことりさん）のProxy＝キーを一切使わない */
         const res = await fetch(CFG.PROXY_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1265,7 +1276,7 @@ $("#btn-again").addEventListener("click", () => {
   const p = new URLSearchParams(location.search);
   if (p.has("reset")) { try { localStorage.removeItem(USER_KEY_STORE); } catch (_) {} }
 
-  const expired = (CFG.EXPIRED === true) || p.has("expired");
+  const expired = isTrialExpired() || p.has("expired");
   const hasKey = !!getUserKey();
 
   if (expired && !hasKey) {
