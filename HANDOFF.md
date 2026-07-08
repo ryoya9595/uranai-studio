@@ -139,12 +139,19 @@ Claude Code になら「`config.js` の PROXY_URL にこのURLを入れて push 
 
 ---
 
-## 7. よくあるカスタマイズ（Claude Codeに頼めばOK）
+## 7. デプロイ後にやるとよいこと（Claude Codeに頼めばOK）
 
-- 文言・タイトルを変える → `index.html`（体験版の案内文は `.trial-notice` 内）
-- 色を変える → `style.css` 冒頭の `:root`（`--gold` などの変数）
-- 占い文のトーンを変える → `app.js` の `buildReadingPrompt()`（Geminiへの指示文）
+公開できたら、まず **精度チェック**、その後 **デザイン・機能の調整** を進めるのがおすすめです。
+Claude Code からも折を見て提案してくれます。
+
+- **精度チェック**：テスト入力を数パターン占って、鑑定文を確認（名前で呼べているか／断定を避けているか／
+  世界観に合うか／長さ・記号）。気になれば `app.js` の `buildReadingPrompt()`（Geminiへの指示文）を調整。
+- **文言・タイトル** → `index.html`（体験版の案内文は `.trial-notice` 内）
+- **色・デザイン** → `style.css` 冒頭の `:root`（`--gold` などの変数）
+- **占うテーマ・カードの意味などの機能** → `app.js`
 - ローカル占い文（AI未接続時のフォールバック）→ `app.js` の各テンプレート
+
+※ 変更は「ローカルでプレビュー確認 → 問題なければ push」の順で。
 
 ---
 
